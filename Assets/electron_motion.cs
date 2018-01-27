@@ -4,25 +4,7 @@ using UnityEngine;
 
 public class electron_motion : MonoBehaviour {
 
-    /*
-    public Transform center;
-    public Vector3 axis = Vector3.up;
-    public float radius = 2.0f;
-    public float radiusSpeed = 0.5f;
-    public float rotationSpeed = 80.0f;*/
-    // Use this for initialization
- /*   void Start () {
-        transform.position = (transform.position - center.position).normalized * radius + center.position;
-    }
-	
-	// Update is called once per frame
-	void Update () {
-        transform.RotateAround(center.position, axis, rotationSpeed * Time.deltaTime);
-        var desiredPosition = (transform.position - center.position).normalized * radius + center.position;
-        transform.position = Vector3.MoveTowards(transform.position, desiredPosition, Time.deltaTime * radiusSpeed);
-    }*/
-
-
+    Rigidbody2D rb;
     public float speed;
     public Transform target;
     public Vector3 positionToMove;
@@ -30,38 +12,52 @@ public class electron_motion : MonoBehaviour {
     public float distance;
     public float distanceFactor = 0.3f;
     public float positionFactor = 0.1f;
-    private bool flag = true;
+    public float movementSpeedFactor;
+    public Vector2 vel;
+    private bool flag = false;
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        movementSpeedFactor = 500f;
+    }
+    void OnTriggerEnter2D(Collider2D coll)   
+    {
+        GameObject parent = coll.gameObject.transform.parent.gameObject;
+        if (parent.tag=="proton_active")
+        {
+            target = parent.transform;
+            transform.up = target.position - transform.position;
+            flag = true;
+
+
+        }
+    }
     void FixedUpdate()
     {
-        while (flag)
+        if (Input.GetKeyUp(KeyCode.Space)) flag = !flag;
+        if (flag)
         {
-            if (Input.GetKey(KeyCode.Space)) flag = false;
-            positionToMove = target.position - this.transform.position;
+            rb.velocity = new Vector3(0, 0, 0);
+            positionToMove =  this.transform.position- target.position;
             distance = positionToMove.magnitude;
-            transform.RotateAround(target.position, zAxis, speed * Time.deltaTime / (distance * distanceFactor));
-            this.transform.position += positionToMove * Time.deltaTime * positionFactor;
+            //angle used to determine rotation direction 
+            float angle = Vector2.SignedAngle(new Vector2(positionToMove.x, positionToMove.y),
+                new Vector2(this.transform.right.x,this.transform.right.y)); 
+            Debug.Log(angle);
+            float rotationDir = 1;
+            if(angle<0)
+            {
+                rotationDir = -1;
+            }
+            transform.RotateAround(target.position, zAxis* rotationDir, speed * Time.deltaTime / (distance * distanceFactor));
+            this.transform.position -= positionToMove * Time.deltaTime * positionFactor;
         }
-
+        else
+        {
+            //this.transform.position += this.transform.up * Time.deltaTime * movementSpeedFactor;
+           rb.velocity = new Vector2(this.transform.right.x, this.transform.right.y) * movementSpeedFactor* Time.deltaTime;
+            vel = rb.velocity;
+        }
     }
 
 }
-/*
- 
-     #pragma strict
- 
- public var center : Transform;
- public var axis   : Vector3 = Vector3.up;
- public var radius = 2.0;
- public var radiusSpeed = 0.5;
- public var rotationSpeed = 80.0; 
- 
- function Start() {
-     transform.position = (transform.position - center.position).normalized * radius + center.position;
- }
- 
- function Update() {
-     transform.RotateAround (center.position, axis, rotationSpeed * Time.deltaTime);
-     var desiredPosition = (transform.position - center.position).normalized * radius + center.position;
-     transform.position = Vector3.MoveTowards(transform.position, desiredPosition, Time.deltaTime * radiusSpeed);
- }
-     */
